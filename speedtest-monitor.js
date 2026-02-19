@@ -1,6 +1,21 @@
 // speedtest-monitor.js
 // Playwright script to run a speedtest, capture results and screenshot.
 const { chromium } = require('playwright');
+const fs = require('fs');
+
+async function waitForSpeedValue(page, selector, timeout = 60000) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    try {
+      const text = await page.locator(selector).textContent({ timeout: 1000 });
+      if (text && text.trim() !== '' && text.trim() !== '—' && /^[\d.,]+$/.test(text.trim().replace(/\s/g, ''))) {
+        return text.trim();
+      }
+    } catch (e) {}
+    await page.waitForTimeout(500);
+  }
+  throw new Error(`Timeout waiting for speed value from ${selector}`);
+}
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
@@ -8,83 +23,67 @@ const { chromium } = require('playwright');
   
   console.log('Navigating to speedtest.net...');
   await page.goto('https://www.speedtest.net/', { waitUntil: 'domcontentloaded', timeout: 60000 });
-
-  // Close consent/cookie modal if it appears
-  try {
-    const consentBtn = await page.locator('button:has-text("Continue")').first().or(
-      page.locator('button:has-text("I Agree")').first()
-    ).or(
-      page.locator('[data-testid="banner-close-button"]')
-    );
-    await consentBtn.click({ timeout: 5000 });
-    console.log('Closed consent modal');
-  } catch (_) {}
-
-  // Try to find and click the "GO" button (the big start button)
+  
+  // Wait for JS to render
+  await page.waitForTimeout(3000);
+  
+  // Click GO button
   console.log('Starting speedtest...');
-  try {
-    // Try different selector strategies for the GO button
-    const goButton = await page.locator('a[href*="run"]').first().or(
-      page.locator('.js-start-test').first()
-    ).or(
-      page.locator('span:has-text("GO")').first()
-    ).or(
-      page.locator('text=GO').first()
-    );
-    await goButton.click({ timeout: 10000 });
-  } catch (e) {
-    console.log('Could not find GO button, trying alternative...');
-    // Click anywhere near the center of the test area
-    await page.click('.test-wrapper, #start-test, body', { force: true });
-  }
-
-  // Wait for the test to complete (up to 2 minutes)
-  console.log('Running speedtest...');
+  const goButton = await page.locator('a.js-start-test').first();
+  await goButton.click({ timeout: 10000 });
+  console.log('GO button clicked - test running...');
   
-  // Wait for upload test to appear (means download is done)
-  await page.waitForSelector('text=/upload/i', { timeout: 120000 }).catch(() => {});
+  // Wait for actual numeric download value (not placeholder)
+  console.log('Waiting for download result...');
+  const download = await waitForSpeedValue(page, '.download-speed.result-data-value');
+  console.log(`Download: ${download} Mbps`);
   
-  // Wait a bit more for test completion
-  await page.waitForTimeout(5000);
-
-  // Extract results with multiple fallback strategies
-  let download = '';
-  let upload = '';
-  let resultUrl = '';
-
+  // Wait for upload result
+  console.log('Waiting for upload result...');
+  const upload = await waitForSpeedValue(page, '.upload-speed.result-data-value');
+  console.log(`Upload: ${upload} Mbps`);
+  
+  // Get ping (usually ready quickly)
+  let ping = '';
   try {
-    // Try to get download speed
-    download = await page.locator('.download-speed, [class*="download"]').first().textContent({ timeout: 5000 });
+    ping = await page.locator('.ping-speed.result-data-value').textContent({ timeout: 5000 });
   } catch (e) {
-    download = await page.locator('text=/\\d+\\s*Mbps/i').first().textContent({ timeout: 5000 }).catch(() => 'N/A');
+    ping = 'N/A';
   }
-
+  
+  console.log(`Ping: ${ping.trim()} ms`);
+  
+  // Get result URL
+  let resultUrl = await page.url();
   try {
-    // Try to get upload speed  
-    upload = await page.locator('.upload-speed, [class*="upload"]').first().textContent({ timeout: 5000 });
-  } catch (e) {
-    upload = await page.locator('text=/\\d+\\s*Mbps/i').nth(1).textContent({ timeout: 5000 }).catch(() => 'N/A');
-  }
-
-  // Take screenshot
+    const resultId = await page.locator('.result-id').textContent({ timeout: 5000 });
+    if (resultId && resultId.trim()) {
+      resultUrl = `https://www.speedtest.net/result/${resultId.trim()}`;
+    }
+  } catch (e) {}
+  
+  // Take final screenshot
   await page.screenshot({ path: 'speedtest-result.png', fullPage: true });
   console.log('Screenshot saved: speedtest-result.png');
 
-  // Try to get share URL
-  try {
-    const shareBtn = await page.locator('button:has-text("Share"), a:has-text("Share"), [data-testid*="share"]').first();
-    await shareBtn.click({ timeout: 5000 });
-    await page.waitForTimeout(2000);
-    
-    const urlInput = await page.locator('input[type="url"], input[readonly]').first();
-    resultUrl = await urlInput.inputValue();
-  } catch (_) {
-    resultUrl = await page.url();
-  }
-
-  console.log('Download:', download.trim());
-  console.log('Upload:', upload.trim());
-  console.log('Result URL:', resultUrl.trim() || await page.url());
+  // Output results
+  console.log('\n=== SPEEDTEST RESULTS ===');
+  console.log(`Download: ${download} Mbps`);
+  console.log(`Upload: ${upload} Mbps`);
+  console.log(`Ping: ${ping.trim()} ms`);
+  console.log(`URL: ${resultUrl}`);
+  console.log('=========================\n');
+  
+  // Save to JSON
+  const results = {
+    timestamp: new Date().toISOString(),
+    download: download,
+    upload: upload,
+    ping: ping.trim(),
+    url: resultUrl
+  };
+  fs.writeFileSync('speedtest-data.json', JSON.stringify(results, null, 2));
+  console.log('Results saved: speedtest-data.json');
 
   await browser.close();
 })();
