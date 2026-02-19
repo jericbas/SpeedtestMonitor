@@ -1,0 +1,27 @@
+{
+  "name": "speedtest-monitor",
+  "version": "1.0.0",
+  "description": "Automated speedtest monitoring using Playwright - captures results from speedtest.net with Mandaluyong server",
+  "main": "speedtest-monitor.js",
+  "scripts": {
+    "start": "node speedtest-monitor.js",
+    "test": "node speedtest-monitor.js",
+    "install:playwright": "npx playwright install chromium"
+  },
+  "keywords": [
+    "speedtest",
+    "monitoring",
+    "playwright",
+    "automation",
+    "bandwidth",
+    "network"
+  ],
+  "author": "jericbas",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.50.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
