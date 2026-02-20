@@ -1,11 +1,13 @@
 // speedtest-monitor.js
-// Playwright script to run a speedtest with retry logic (max 3 attempts)
-// Usage: node speedtest-monitor.js [--verbose | --details]
+// Playwright script to run a speedtest with retry logic
+// Usage: node speedtest-monitor.js [--verbose] [--output=url|json|full]
 
 const { chromium } = require('playwright');
 const fs = require('fs');
 
-const verbose = process.argv.includes('--verbose') || process.argv.includes('--details');
+const verbose = process.argv.includes('--verbose');
+const outputArg = process.argv.find(arg => arg.startsWith('--output='));
+const outputFormat = outputArg ? outputArg.split('=')[1] : 'url';
 const MAX_RETRIES = 3;
 
 async function waitForSpeedValue(page, selector, timeout = 60000) {
@@ -28,7 +30,6 @@ async function runSpeedtest() {
 
   if (verbose) console.log('Navigating to speedtest.net...');
   await page.goto('https://www.speedtest.net/', { waitUntil: 'domcontentloaded', timeout: 60000 });
-
   await page.waitForTimeout(3000);
 
   if (verbose) console.log('Starting speedtest...');
@@ -71,16 +72,21 @@ async function runSpeedtest() {
   fs.writeFileSync('speedtest-data.json', JSON.stringify(results, null, 2));
   await page.screenshot({ path: 'speedtest-result.png', fullPage: true });
 
-  if (verbose) {
+  // Output based on format
+  if (outputFormat === 'json') {
+    console.log(JSON.stringify(results, null, 2));
+  } else if (outputFormat === 'full') {
     console.log('\n=== SPEEDTEST RESULTS ===');
     console.log(`Download: ${download} Mbps`);
     console.log(`Upload: ${upload} Mbps`);
     console.log(`Ping: ${ping.trim()} ms`);
     console.log(`URL: ${resultUrl}`);
     console.log('=========================\n');
+  } else {
+    // Default: url only
+    console.log(resultUrl);
   }
 
-  console.log(resultUrl);
   await browser.close();
 }
 
