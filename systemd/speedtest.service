@@ -4,6 +4,6 @@ Description=Speedtest Monitor - Run internet speed test
 [Service]
 Type=oneshot
 WorkingDirectory=/home/je/SpeedtestMonitor
-ExecStart=/usr/bin/node /home/je/SpeedtestMonitor/speedtest-monitor.js --verbose --output=full
+ExecStart=/usr/bin/node /home/je/SpeedtestMonitor/speedtest-monitor.js --verbose --output=full --save-history
 StandardOutput=append:/home/je/SpeedtestMonitor/speedtest.log
 StandardError=append:/home/je/SpeedtestMonitor/speedtest.log
