@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Speedtest Monitor every 3-3.5 hours
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=3h
+RandomizedDelaySec=30m
+
+[Install]
+WantedBy=timers.target
