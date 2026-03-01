@@ -29,6 +29,15 @@ async function waitForSpeedValue(page, selector, timeout = 60000) {
   throw new Error(`Timeout waiting for speed value from ${selector}`);
 }
 
+async function getElementText(page, selector, timeout = 5000) {
+  try {
+    const text = await page.locator(selector).first().textContent({ timeout });
+    return text ? text.trim() : 'N/A';
+  } catch (e) {
+    return 'N/A';
+  }
+}
+
 function saveToHistory(results) {
   try {
     let history = [];
@@ -51,6 +60,28 @@ async function runSpeedtest() {
   if (verbose) console.log('Navigating to speedtest.net...');
   await page.goto('https://www.speedtest.net/', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForTimeout(3000);
+  
+  // Capture ISP and Server BEFORE clicking GO
+  let isp = 'N/A';
+  let serverLocation = 'N/A';
+  let serverName = 'N/A';
+  
+  // ISP from the info panel
+  isp = await getElementText(page, '.isp-info .isp-value, .isp-info-value, [data-isp], .result-isp');
+  if (isp === 'N/A') {
+    // Try common ISP selectors
+    isp = await getElementText(page, '.result-data.isp, .isp, .your-isp');
+  }
+  
+  // Server location
+  serverLocation = await getElementText(page, '.host-location, .server-location, [data-server-location], .result-server');
+  serverName = await getElementText(page, '.host-name, .server-name, [data-server-name]');
+  
+  if (verbose) {
+    console.log('Pre-test info captured:');
+    console.log(`  ISP: ${isp}`);
+    console.log(`  Server: ${serverName} (${serverLocation})`);
+  }
   
   if (verbose) console.log('Starting speedtest...');
   const goButton = await page.locator('a.js-start-test').first();
@@ -104,6 +135,9 @@ async function runSpeedtest() {
   
   const results = {
     timestamp: new Date().toISOString(),
+    isp: isp,
+    server: serverLocation,
+    serverName: serverName,
     download: download,
     upload: upload,
     ping: ping.trim(),
@@ -126,6 +160,8 @@ async function runSpeedtest() {
   } else if (outputFormat === 'full') {
     console.log('\n=== SPEEDTEST RESULTS ===');
     console.log(`Timestamp: ${results.timestamp}`);
+    console.log(`ISP:       ${isp}`);
+    console.log(`Server:    ${serverName} (${serverLocation})`);
     console.log(`Download:  ${download} Mbps`);
     console.log(`Upload:    ${upload} Mbps`);
     console.log(`Ping:      ${ping.trim()} ms`);
