@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Speedtest CLI every 1 hour with random 0-30min delay
+
+[Timer]
+OnBootSec=1min
+OnCalendar=hourly
+RandomizedDelaySec=30m
+
+[Install]
+WantedBy=timers.target

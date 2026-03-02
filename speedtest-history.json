@@ -1,0 +1,86 @@
+[
+  {
+    "timestamp": "2026-03-01T07:55:54.717Z",
+    "download": "290.75",
+    "upload": "296.19",
+    "ping": "13",
+    "url": "https://www.speedtest.net/result/18903881049"
+  },
+  {
+    "timestamp": "2026-03-01T08:44:21.972Z",
+    "download": "289.75",
+    "upload": "296.13",
+    "ping": "8",
+    "url": "https://www.speedtest.net/result/18903983928"
+  },
+  {
+    "timestamp": "2026-03-01T10:26:34.170Z",
+    "isp": "N/A",
+    "server": "Quezon City",
+    "serverName": "N/A",
+    "download": "272.27",
+    "upload": "295.42",
+    "ping": "4",
+    "url": "https://www.speedtest.net/result/18904213878"
+  },
+  {
+    "timestamp": "2026-03-01T12:05:53.695Z",
+    "isp": "N/A",
+    "server": "Quezon City",
+    "serverName": "N/A",
+    "download": "286.01",
+    "upload": "296.31",
+    "ping": "4",
+    "url": "https://www.speedtest.net/result/18904459754"
+  },
+  {
+    "timestamp": "2026-03-01T15:18:49.562Z",
+    "isp": "N/A",
+    "server": "Makati City",
+    "serverName": "N/A",
+    "download": "290.59",
+    "upload": "296.13",
+    "ping": "4",
+    "url": "https://www.speedtest.net/result/18905034208"
+  },
+  {
+    "timestamp": "2026-03-01T18:36:50.903Z",
+    "isp": "N/A",
+    "server": "Quezon City",
+    "serverName": "N/A",
+    "download": "290.58",
+    "upload": "296.31",
+    "ping": "4",
+    "url": "https://www.speedtest.net/result/18905622113"
+  },
+  {
+    "timestamp": "2026-03-01T21:43:23.411Z",
+    "isp": "N/A",
+    "server": "Makati City",
+    "serverName": "N/A",
+    "download": "290.63",
+    "upload": "295.77",
+    "ping": "4",
+    "url": "https://www.speedtest.net/result/18906080146"
+  },
+  {
+    "timestamp": "2026-03-02T01:11:01.697Z",
+    "isp": "N/A",
+    "server": "Manila",
+    "serverName": "N/A",
+    "download": "290.02",
+    "upload": "295.54",
+    "ping": "4",
+    "url": "https://www.speedtest.net/result/18906465985"
+  },
+  {
+    "timestamp": "2026-03-02T04:28:21.190Z",
+    "isp": "N/A",
+    "server": "Quezon City",
+    "serverName": "N/A",
+    "download": "288.87",
+    "upload": "296.18",
+    "ping": "4",
+    "url": "https://www.speedtest.net/result/18906870283"
+  }
+]

@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-03-02T14:46:32+08:00",
+  "server_id": "36738",
+  "server_name": "Converge ICT Solutions Inc.",
+  "server_location": "Mandaluyong",
+  "isp": "Converge",
+  "download": "0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0",
+  "upload": "0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0",
+  "ping": "3.834",
+  "raw": {"type":"result","timestamp":"2026-03-02T06:46:32Z","ping":{"jitter":2.975,"latency":3.834,"low":3.146,"high":8.846},"download":{"bandwidth":35755912,"bytes":353899296,"elapsed":9615,"latency":{"iqm":6.001,"low":3.197,"high":222.738,"jitter":6.664}},"upload":{"bandwidth":36325101,"bytes":389210327,"elapsed":10410,"latency":{"iqm":5.951,"low":2.841,"high":229.118,"jitter":5.775}},"isp":"Converge","interface":{"internalIp":"192.168.1.81","name":"wlp1s0","macAddr":"BC:2B:02:45:84:12","isVpn":false,"externalIp":"136.158.29.144"},"server":{"id":36738,"host":"sbm-spdtst-srv.convergeict.com","port":8080,"name":"Converge ICT Solutions Inc.","location":"Mandaluyong","country":"Philippines","ip":"136.158.12.22"},"result":{"id":"f80e9b2b-533c-4af6-ba5d-ab607fb5e06d","url":"https://www.speedtest.net/result/c/f80e9b2b-533c-4af6-ba5d-ab607fb5e06d","persisted":true}}
+}

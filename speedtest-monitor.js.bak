@@ -11,8 +11,9 @@ const outputArg = process.argv.find(arg => arg.startsWith('--output='));
 const outputFormat = outputArg ? outputArg.split('=')[1] : 'url';
 const saveHistory = process.argv.includes('--save-history');
 const MAX_RETRIES = 3;
-const TARGET_SERVER = 'Mandaluyong';
+const TARGET_SERVER = 'Mandaluyong'; // Change to this server if available
 
+// History file path
 const HISTORY_FILE = path.join(__dirname, 'speedtest-history.json');
 
 async function waitForSpeedValue(page, selector, timeout = 60000) {
@@ -42,40 +43,39 @@ async function changeServerToMandaluyong(page) {
   if (verbose) console.log(`Checking if we need to change server to ${TARGET_SERVER}...`);
   
   try {
-    // Try multiple selectors for the change server button
-    let changeServerBtn = null;
-    const selectors = ['a.js-change-server', '.change-server', '.host-action', 'button:has-text("Change")', 'a:has-text("Change")'];
-    
-    for (const selector of selectors) {
-      const btn = page.locator(selector).first();
-      if (await btn.count() > 0) {
-        changeServerBtn = btn;
-        break;
-      }
-    }
-    
-    if (!changeServerBtn) {
-      throw new Error('Change Server button not found');
-    }
-    await changeServerBtn.scrollIntoViewIfNeeded();
-    await changeServerBtn.click({ timeout: 10000, force: true });
+    // Click "Change Server" button
+    const changeServerBtn = await page.locator('a.js-change-server, #change-server, .change-server, .host-action').first();
+    await changeServerBtn.click({ timeout: 10000 });
     if (verbose) console.log('Clicked Change Server button');
     
+    // Wait for server list to appear
     await page.waitForTimeout(2000);
     
-    // Try to find Mandaluyong in the list
-    const servers = await page.locator('.server-list-item, .host-item, [data-host-location], .server-item').all();
+    // Search or find Mandaluyong server
+    // Try to find server by text
+    const serverSelector = `text=${TARGET_SERVER}`;
+    const serverOption = await page.locator(serverSelector).first();
+    
+    if (await serverOption.count() > 0) {
+      await serverOption.click();
+      if (verbose) console.log(`Selected server: ${TARGET_SERVER}`);
+      await page.waitForTimeout(2000);
+      return true;
+    }
+    
+    // Alternative: look for server in list items
+    const servers = await page.locator('.server-list-item, .server-item, .host-item').all();
     for (const server of servers) {
       const text = await server.textContent();
-      if (text && text.toLowerCase().includes(TARGET_SERVER.toLowerCase())) {
+      if (text && text.includes(TARGET_SERVER)) {
         await server.click();
-        if (verbose) console.log(`Selected server: ${text.trim()}`);
+        if (verbose) console.log(`Selected server containing: ${TARGET_SERVER}`);
         await page.waitForTimeout(2000);
         return true;
       }
     }
     
-    if (verbose) console.log(`Server ${TARGET_SERVER} not found in list, using default`);
+    if (verbose) console.log(`Server ${TARGET_SERVER} not found, using default`);
     return false;
   } catch (e) {
     if (verbose) console.log(`Could not change server: ${e.message}`);
@@ -106,20 +106,27 @@ async function runSpeedtest() {
   await page.goto('https://www.speedtest.net/', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForTimeout(3000);
   
-  // Change server to Mandaluyong
+  // Try to change server to Mandaluyong
   await changeServerToMandaluyong(page);
   
-  // Capture ISP and Server
-  let isp = await getElementText(page, '.isp-display, .your-isp, [data-isp-name], .result-isp');
+  // Capture ISP and Server BEFORE clicking GO
+  let isp = 'N/A';
+  let serverLocation = 'N/A';
+  let serverName = 'N/A';
+  
+  // ISP from the info panel
+  isp = await getElementText(page, '.isp-info .isp-value, .isp-info-value, [data-isp], .result-isp');
   if (isp === 'N/A') {
-    isp = await getElementText(page, '.result-data.isp');
+    // Try common ISP selectors
+    isp = await getElementText(page, '.isp-display, .your-isp, [data-isp-name]');
   }
   
-  let serverLocation = await getElementText(page, '.host-location, .server-location, .result-server');
-  let serverName = await getElementText(page, '.host-name, .server-name, .server-display');
+  // Server location - try multiple selectors
+  serverLocation = await getElementText(page, '.host-location, .server-location, [data-server-location], .result-server, #server-cluster .host-location');
+  serverName = await getElementText(page, '.host-name, .server-name, .server-display, [data-server-name]');
   
   if (verbose) {
-    console.log('Pre-test info:');
+    console.log('Pre-test info captured:');
     console.log(`  ISP: ${isp}`);
     console.log(`  Server: ${serverName} (${serverLocation})`);
   }
@@ -143,19 +150,32 @@ async function runSpeedtest() {
   } catch (e) {}
   if (verbose) console.log(`Ping: ${ping.trim()} ms`);
   
+  // Wait a bit for result data to settle
   await page.waitForTimeout(2000);
   
+  // Try multiple methods to get result URL
   let resultUrl = 'https://www.speedtest.net/';
+  
+  // Method 1: Check page URL
   const pageUrl = await page.url();
   const match = pageUrl.match(/\/result\/(\d+)/);
   if (match) {
     resultUrl = `https://www.speedtest.net/result/${match[1]}`;
   }
   
+  // Method 2: Look for result container and copy link (if available)
   try {
     const resultLink = await page.locator('a[href*="/result/"]').first().getAttribute('href');
     if (resultLink && resultLink.includes('/result/')) {
       resultUrl = resultLink.startsWith('http') ? resultLink : `https://www.speedtest.net${resultLink}`;
+    }
+  } catch (e) {}
+  
+  // Method 3: Check for result ID in page content
+  try {
+    const resultId = await page.locator('.result-id, [data-resultid], #result-id').textContent({ timeout: 2000 });
+    if (resultId && /^\d+$/.test(resultId.trim())) {
+      resultUrl = `https://www.speedtest.net/result/${resultId.trim()}`;
     }
   } catch (e) {}
   
@@ -172,14 +192,17 @@ async function runSpeedtest() {
     url: resultUrl
   };
   
+  // Save current results
   fs.writeFileSync('speedtest-data.json', JSON.stringify(results, null, 2));
   
+  // Append to history if requested
   if (saveHistory) {
     saveToHistory(results);
   }
   
   await page.screenshot({ path: 'speedtest-result.png', fullPage: true });
   
+  // Output based on format
   if (outputFormat === 'json') {
     console.log(JSON.stringify(results, null, 2));
   } else if (outputFormat === 'full') {
@@ -190,34 +213,4 @@ async function runSpeedtest() {
     console.log(`Download:  ${download} Mbps`);
     console.log(`Upload:    ${upload} Mbps`);
     console.log(`Ping:      ${ping.trim()} ms`);
-    console.log(`URL:       ${resultUrl}`);
-    console.log('=========================\n');
-  } else {
-    console.log(resultUrl);
-  }
-  
-  await browser.close();
-}
-
-(async () => {
-  let lastError;
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    if (verbose && attempt > 1) {
-      console.log(`Retry attempt ${attempt}/${MAX_RETRIES}...`);
-    }
-    try {
-      await runSpeedtest();
-      return;
-    } catch (error) {
-      lastError = error;
-      if (verbose) {
-        console.log(`Attempt ${attempt} failed: ${error.message}`);
-      }
-      if (attempt < MAX_RETRIES) {
-        await new Promise(r => setTimeout(r, 2000));
-      }
-    }
-  }
-  console.error(`Failed after ${MAX_RETRIES} attempts: ${lastError.message}`);
-  process.exit(1);
-})();
+    console.log(`URL:
