@@ -7,3 +7,6 @@ WorkingDirectory=/home/je/SpeedtestMonitor/cli
 ExecStart=/bin/bash /home/je/SpeedtestMonitor/cli/run-speedtest.sh 36738
 StandardOutput=append:/home/je/SpeedtestMonitor/speedtest.log
 StandardError=append:/home/je/SpeedtestMonitor/speedtest.log
+
+[Install]
+WantedBy=default.target

@@ -82,5 +82,36 @@
     "upload": "296.18",
     "ping": "4",
     "url": "https://www.speedtest.net/result/18906870283"
+  },
+  {
+    "timestamp": "2026-03-02T07:32:52.611Z",
+    "isp": "N/A",
+    "server": "Manila",
+    "serverName": "N/A",
+    "download": "285.53",
+    "upload": "295.84",
+    "ping": "4",
+    "url": "https://www.speedtest.net/result/18907301557"
   }
-]
+]{
+  "timestamp": "2026-03-02T07:35:37Z",
+  "server_id": 36738,
+  "server_name": "Converge ICT Solutions Inc.",
+  "server_location": "Mandaluyong",
+  "isp": "Converge",
+  "download_mbps": 287.01,
+  "upload_mbps": 290.60,
+  "ping_ms": 3.581,
+  "url": "https://www.speedtest.net/result/c/edc9fd94-a28e-4494-8133-f3acd89b295c"
+}
+{
+  "timestamp": "2026-03-02T08:19:53Z",
+  "server_id": 36738,
+  "server_name": "Converge ICT Solutions Inc.",
+  "server_location": "Mandaluyong",
+  "isp": "Converge",
+  "download_mbps": 283.26,
+  "upload_mbps": 292.88,
+  "ping_ms": 4.110,
+  "url": "https://www.speedtest.net/result/c/ab8aac32-75fc-4aca-86c8-d585c61c02c9"
+}
